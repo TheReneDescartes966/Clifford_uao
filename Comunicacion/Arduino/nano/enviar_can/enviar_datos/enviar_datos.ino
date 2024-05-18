@@ -16,18 +16,25 @@ void setup() {
 }
 
 void loop() {
-  // En el loop principal enviamos el mensaje
-  sendHelloWorld();
-  delay(1000); // Enviar mensaje cada segundo
+  // Chequear si hay datos disponibles en el puerto serial
+  if (Serial.available()) {
+    // Leer el mensaje del puerto serial
+    String message = Serial.readStringUntil('\n');
+    // Verificar que el mensaje tiene la longitud esperada (16 caracteres)
+    if (message.length() == 16) {
+      sendHelloWorld(message.c_str());
+    } else {
+      Serial.println("Error: Mensaje inválido, debe ser de 16 caracteres");
+    }
+  }
 }
 
-void sendHelloWorld() {
+void sendHelloWorld(const char* message) {
   struct can_frame canMsg1;
   struct can_frame canMsg2;
 
   canMsg1.can_id = 0x121; // ID del mensaje CAN para la primera parte
   canMsg2.can_id = 0x122; // ID del mensaje CAN para la segunda parte
-  const char* message = "[1023,1023,1023]";
 
   canMsg1.can_dlc = 8; // Número de bytes en la primera parte del mensaje
   canMsg2.can_dlc = 8; // Número de bytes en la segunda parte del mensaje
