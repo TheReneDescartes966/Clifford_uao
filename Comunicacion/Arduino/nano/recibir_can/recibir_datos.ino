@@ -4,7 +4,7 @@
 
 MCP2515 mcp2515(10); // Pin CS del MCP2515
 
-const uint32_t FILTER_ID = 0x123; // ID específico que queremos recibir
+const uint32_t FILTER_ID = 0x121; // ID específico que queremos recibir
 
 void setup() {
   Serial.begin(115200);
