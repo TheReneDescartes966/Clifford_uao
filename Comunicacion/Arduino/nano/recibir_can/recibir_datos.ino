@@ -31,13 +31,28 @@ void loop() {
       Serial.println(canMsg.can_dlc);
 
       // Mostrar los datos recibidos como caracteres
-      Serial.print("Data: ");
+      char receivedData[9];
       for (int i = 0; i < canMsg.can_dlc; i++) {
-        Serial.print((char)canMsg.data[i]);
+        receivedData[i] = (char)canMsg.data[i];
       }
-      Serial.println();
+      receivedData[canMsg.can_dlc] = '\0'; // Null-terminate the string
+
+      Serial.print("Data: ");
+      Serial.println(receivedData);
+
+      // Extraer los valores numéricos del formato "[1023,1023,1023]"
+      int values[3] = {0, 0, 0};
+      sscanf(receivedData, "[%d,%d,%d]", &values[0], &values[1], &values[2]);
+
+      // Mostrar los valores extraídos
+      Serial.print("Value 1: ");
+      Serial.println(values[0]);
+      Serial.print("Value 2: ");
+      Serial.println(values[1]);
+      Serial.print("Value 3: ");
+      Serial.println(values[2]);
     }
   }
 
-  delay(10);
+  delay(100);
 }

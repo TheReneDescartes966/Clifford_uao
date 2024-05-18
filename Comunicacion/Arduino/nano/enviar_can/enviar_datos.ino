@@ -27,16 +27,16 @@ void sendHelloWorld() {
   struct can_frame canMsg;
   
   canMsg.can_id = 0x121; // ID del mensaje CAN
-  const char* message = "diego   ";
-  canMsg.can_dlc = 8; // Número de bytes en el mensaje (máximo 8 bytes)
+  const char* message = "[1023,1023,1023]";
+  canMsg.can_dlc = 16; // Número de bytes en el mensaje (máximo 8 bytes)
   
   // Copiar los primeros 8 bytes del mensaje en el array de datos
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 16; i++) {
     canMsg.data[i] = message[i];
   }
 
   // Enviar el mensaje
   mcp2515.sendMessage(&canMsg);
 
-  Serial.println("Mensaje 'Hola Mundo' enviado");
+  Serial.println("Mensaje enviado");
 }
