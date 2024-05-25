@@ -4,10 +4,7 @@
 
 MCP2515 mcp2515(10); // Pin CS del MCP2515
 
-const uint32_t FILTER_ID1 = 0x121; // ID específico de la primera parte del mensaje
-const uint32_t FILTER_ID2 = 0x122; // ID específico de la segunda parte del mensaje
-
-char receivedData[17]; // Buffer para almacenar el mensaje completo de 16 bytes
+const uint16_t can_ids[8] = {0x121, 0x122, 0x123, 0x124, 0x125, 0x126, 0x127, 0x128}; // IDs para las tramas
 
 void setup() {
   Serial.begin(115200);
@@ -22,42 +19,31 @@ void setup() {
 
 void loop() {
   struct can_frame canMsg;
+  char receivedMessage[65] = {0}; // Para almacenar el mensaje completo de 64 caracteres
 
-  // Chequear si hay un nuevo mensaje CAN
-  if (mcp2515.readMessage(&canMsg) == MCP2515::ERROR_OK) {
-    // Verificar si el ID del mensaje coincide con alguno de los IDs específicos que queremos recibir
-    if (canMsg.can_id == FILTER_ID1) {
-      // Copiar los primeros 8 bytes del mensaje recibido
-      for (int i = 0; i < canMsg.can_dlc; i++) {
-        receivedData[i] = (char)canMsg.data[i];
+  // Contador para saber cuántas tramas hemos recibido
+  int framesReceived = 0;
+
+  // Loop para recibir las 8 tramas
+  while (framesReceived < 8) {
+    // Chequear si hay un nuevo mensaje CAN
+    if (mcp2515.readMessage(&canMsg) == MCP2515::ERROR_OK) {
+      // Verificar si el ID del mensaje está en nuestro arreglo de IDs
+      for (int i = 0; i < 8; i++) {
+        if (canMsg.can_id == can_ids[i]) {
+          // Copiar los datos recibidos al mensaje completo en la posición correcta
+          for (int j = 0; j < 8; j++) {
+            receivedMessage[i * 8 + j] = canMsg.data[j];
+          }
+          framesReceived++;
+          break;
+        }
       }
-      Serial.println("Primera parte recibida");
-    } else if (canMsg.can_id == FILTER_ID2) {
-      // Copiar los siguientes 8 bytes del mensaje recibido
-      for (int i = 0; i < canMsg.can_dlc; i++) {
-        receivedData[i + 8] = (char)canMsg.data[i];
-      }
-      receivedData[16] = '\0'; // Null-terminate the string
-
-      Serial.println("Segunda parte recibida");
-
-      // Mostrar el mensaje completo recibido
-      Serial.print("Data: ");
-      Serial.println(receivedData);
-
-      // Extraer los valores numéricos del formato "[1023,1023,1023]"
-      int values[3] = {0, 0, 0};
-      sscanf(receivedData, "[%d,%d,%d]", &values[0], &values[1], &values[2]);
-
-      // Mostrar los valores extraídos
-      Serial.print("Value 1: ");
-      Serial.println(values[0]);
-      Serial.print("Value 2: ");
-      Serial.println(values[1]);
-      Serial.print("Value 3: ");
-      Serial.println(values[2]);
     }
+    delay(10); // Pequeña demora para evitar sobrecarga del loop
   }
 
-  delay(100);
+  // Mostrar el mensaje completo recibido
+  Serial.print("Mensaje completo recibido: ");
+  Serial.println(receivedMessage);
 }

@@ -20,38 +20,33 @@ void loop() {
   if (Serial.available()) {
     // Leer el mensaje del puerto serial
     String message = Serial.readStringUntil('\n');
-    // Verificar que el mensaje tiene la longitud esperada (16 caracteres)
-    if (message.length() == 16) {
-      sendHelloWorld(message.c_str());
+    // Verificar que el mensaje tiene la longitud esperada (64 caracteres)
+    if (message.length() == 64) {
+      sendMessageInFrames(message.c_str());
     } else {
-      Serial.println("Error: Mensaje inválido, debe ser de 16 caracteres");
+      Serial.println("Error: Mensaje inválido, debe ser de 64 caracteres");
     }
   }
 }
 
-void sendHelloWorld(const char* message) {
-  struct can_frame canMsg1;
-  struct can_frame canMsg2;
+void sendMessageInFrames(const char* message) {
+  struct can_frame canMsg[8]; // Arreglo para las 8 tramas CAN
+  uint16_t can_ids[8] = {0x121, 0x122, 0x123, 0x124, 0x125, 0x126, 0x127, 0x128}; // IDs para las tramas
 
-  canMsg1.can_id = 0x121; // ID del mensaje CAN para la primera parte
-  canMsg2.can_id = 0x122; // ID del mensaje CAN para la segunda parte
-
-  canMsg1.can_dlc = 8; // Número de bytes en la primera parte del mensaje
-  canMsg2.can_dlc = 8; // Número de bytes en la segunda parte del mensaje
-
-  // Copiar los primeros 8 bytes del mensaje en el array de datos de la primera trama
   for (int i = 0; i < 8; i++) {
-    canMsg1.data[i] = message[i];
+    canMsg[i].can_id = can_ids[i]; // Asignar el ID correspondiente
+    canMsg[i].can_dlc = 8; // Cada trama tiene 8 bytes
+
+    // Copiar los 8 bytes correspondientes del mensaje en el array de datos de la trama
+    for (int j = 0; j < 8; j++) {
+      canMsg[i].data[j] = message[i * 8 + j];
+    }
+
+    // Enviar la trama
+    mcp2515.sendMessage(&canMsg[i]);
+
+    // Imprimir mensaje de confirmación
+    Serial.print("Mensaje enviado en trama CAN ");
+    Serial.println(i + 1);
   }
-
-  // Copiar los siguientes 8 bytes del mensaje en el array de datos de la segunda trama
-  for (int i = 0; i < 8; i++) {
-    canMsg2.data[i] = message[i + 8];
-  }
-
-  // Enviar las dos partes del mensaje
-  mcp2515.sendMessage(&canMsg1);
-  mcp2515.sendMessage(&canMsg2);
-
-  Serial.println("Mensaje enviado en dos tramas CAN");
 }
